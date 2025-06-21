@@ -1,61 +1,165 @@
-# Documentação do projeto Franzininho
+## 🎮 Jogo de Reflexo com a Franzininho (Modo Multiplayer com LCD, Buzzer e Ranking)
 
-Olá, seja bem vindo ao repositório com a documentação oficial da Franzininho. Aqui você encontrará todo o conteúdo para montagem e uso da placa, assim como alguns exemplos de projetos. Se você quiser colaborar, ou viu algum erro, fique a vontade para criar uma Issue ou entrar em contato com os administradores do projeto.
+Este projeto evoluído permite dois jogadores testarem seus reflexos com feedback visual em **display LCD**, som de vitória via **buzzer**, e registro de placares com **melhor de 3 partidas**. Tudo isso usando a **Franzininho DIY**.
 
-A documentação está dividida em tópicos, onde cada tópico é um diretório com o conteúdo específico. Se tiver dificuldade para encontrar as informações, por favor deixe um feedback.
+---
 
-Se quiser entrar em contato com os administradores do projeto, envie um e-mail para: contato@franzininho.com.br
+## 🧰 Materiais necessários
 
+- 1 placa Franzininho DIY  
+- 2 LEDs (um para cada jogador)  
+- 2 resistores de 220Ω  
+- 2 botões (push-button)  
+- 1 buzzer ativo  
+- 1 display LCD 16x2 (com módulo I2C) ou OLED  
+- Jumpers, protoboard  
+- Bibliotecas: `LiquidCrystal_I2C`, `EEPROM` (ambas na IDE Arduino)
 
+---
 
-1. **[Projeto-Franzininho](https://github.com/Franzininho/franzininho-docs/tree/master/01-Projeto-Franzininho "01-Projeto-Franzininho")**
-2. **[Placa Franzininho DIY](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY)**
-	* [Lista de materiais (BOM)](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Lista%20materiais%20(BOM))
-	* [Identificando os componentes](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Identificando%20os%20componentes)
-	* [Montagem da placa V1](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Montagem-da-placa-V1 "Montagem da placa-versão 1")
-	* [Montagem da placa V2](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Montagem-da-placa-V2 "Montagem da placa - versão 2")
-	* [Pinagem](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Pinagem)
-	* [Gravação do bootloader](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Grava%C3%A7%C3%A3o%20do%20bootloader)
-  	* [Drivers](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Drivers)
-	* [Configuração IDE Arduino](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Configura%C3%A7%C3%A3o-IDE-Arduino)
-	* [Upload do Sketch](https://github.com/Franzininho/franzininho-docs/tree/master/02-Franzininho-DIY/Upload-do-Sketch)
+## 🔌 Ligações principais
 
+- LED1 no pino D2  
+- LED2 no pino D3  
+- Botão1 no pino D4  
+- Botão2 no pino D5  
+- Buzzer no pino D6  
+- Display LCD via I2C nos pinos A4 (SDA) e A5 (SCL)
 
+---
 
-3. **[Funções Arduino](https://github.com/Franzininho/franzininho-docs/tree/master/03-Funcoes-Arduino)**
+## 💻 Código-fonte com recursos extras
 
-	- [Entradas e Saídas Digitais](https://github.com/Franzininho/franzininho-docs/tree/master/03-Funcoes-Arduino/Entradas-Saidas-Digitais)
-	- [Entradas Analógicas](https://github.com/Franzininho/franzininho-docs/tree/master/03-Funcoes-Arduino/Entradas-Analogicas)
-	- [PWM](https://github.com/Franzininho/franzininho-docs/tree/master/03-Funcoes-Arduino/PWM)
-	- [I2C](https://github.com/Franzininho/franzininho-docs/tree/master/03-Funcoes-Arduino/I2C)
+```cpp
+#include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
+#define LED1 2
+#define LED2 3
+#define BOTAO1 4
+#define BOTAO2 5
+#define BUZZER 6
 
-4. **Dicas e Truques**
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-	* [Instalando componente no Fritzing](https://github.com/Franzininho/franzininho-fritzing)
+int placar1 = 0, placar2 = 0;
+bool esperando = false;
+unsigned long tempoLED;
 
+void setup() {
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(BOTAO1, INPUT_PULLUP);
+  pinMode(BOTAO2, INPUT_PULLUP);
+  pinMode(BUZZER, OUTPUT);
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(9600);
+  delay(1000);
+  lcd.setCursor(0, 0);
+  lcd.print("Reflexo Multiplayer");
+  delay(2000);
+  lcd.clear();
+}
 
-5. **Exemplos de projetos**
+void loop() {
+  if (!esperando) {
+    lcd.setCursor(0, 0);
+    lcd.print("Preparar...");
+    delay(random(2000, 5000));
+    digitalWrite(LED1, HIGH);
+    digitalWrite(LED2, HIGH);
+    lcd.setCursor(0, 0);
+    lcd.print("Vai!           ");
+    tempoLED = millis();
+    esperando = true;
+  }
 
-- [Pisca LED](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Pisca-LED-(blink))
-- [Controle brilho de LED](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Controle-brilho-de-LED)
-- [Leitura de Tecla](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Leitura-de-tecla)
-- [Tecla Liga/Desliga](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Tecla-liga-desliga)
-- [Sensor de luz com LDR](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Sensor-luz-LDR)
-- [Semáforo](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Semaforo)
-- Carrinho controlado por Bluetooth
-- [Controle Jogo Google Chrome (dinossauro)](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Controle%20Jogo%20Google%20Chrome%20(dinossauro))
-- [Projeto de Páscoa](https://github.com/Franzininho/franzininho-docs/tree/master/05-Exemplos%20de%20projetos/Projeto%20de%20P%C3%A1scoa%20com%20a%20Franzininho)
+  if (esperando) {
+    if (digitalRead(BOTAO1) == LOW) {
+      digitalWrite(LED1, LOW);
+      digitalWrite(LED2, LOW);
+      unsigned long tempo = millis() - tempoLED;
+      placar1++;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("J1: ");
+      lcd.print(tempo);
+      lcd.print(" ms");
+      lcd.setCursor(0, 1);
+      lcd.print("Placar J1:");
+      lcd.print(placar1);
+      somVitoria();
+      checarVitoria();
+      esperando = false;
+      delay(2000);
+    } else if (digitalRead(BOTAO2) == LOW) {
+      digitalWrite(LED1, LOW);
+      digitalWrite(LED2, LOW);
+      unsigned long tempo = millis() - tempoLED;
+      placar2++;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("J2: ");
+      lcd.print(tempo);
+      lcd.print(" ms");
+      lcd.setCursor(0, 1);
+      lcd.print("Placar J2:");
+      lcd.print(placar2);
+      somVitoria();
+      checarVitoria();
+      esperando = false;
+      delay(2000);
+    }
+  }
+}
 
+void somVitoria() {
+  tone(BUZZER, 1000, 300);
+  delay(300);
+  noTone(BUZZER);
+}
 
+void checarVitoria() {
+  if (placar1 >= 3 || placar2 >= 3) {
+    lcd.clear();
+    if (placar1 > placar2) {
+      lcd.print("Jogador 1 Venceu!");
+      EEPROM.write(0, 1); // salvar vencedor
+    } else {
+      lcd.print("Jogador 2 Venceu!");
+      EEPROM.write(0, 2);
+    }
+    delay(3000);
+    lcd.clear();
+    lcd.print("Reiniciando...");
+    delay(2000);
+    placar1 = 0;
+    placar2 = 0;
+    lcd.clear();
+  }
+}
+```
 
+---
 
-6. **Resolução de problemas**
+## 🧠 Conceitos aplicados
 
+- Uso de displays LCD via I2C  
+- Leitura de botões com `INPUT_PULLUP`  
+- Temporização com `millis()`  
+- Áudio com buzzer (tom de vitória)  
+- Armazenamento de dados com `EEPROM.write()`  
+- Placar com vitória melhor de 3
 
+---
 
-7. **Downloads**
-	* Apostilas
-	* Slides
+## 📚 Tutoriais complementares
 
-8. **FAQ**
+- [LCD I2C com Arduino](https://www.arduino.cc/en/Tutorial/HelloWorld)  
+- [EEPROM Arduino](https://www.arduino.cc/en/Reference/EEPROM)  
+- [Buzzer Arduino básico](https://www.arduino.cc/en/Tutorial/toneMelody)  
+
+---
+
+**Feito com ❤️ pela comunidade Franzininho.**
